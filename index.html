@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Un detallito para ti 🌻</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #fff8e1; /* Fondo amarillo crema muy suave */
+            font-family: 'Poppins', sans-serif;
+            user-select: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #4e342e;
+        }
+
+        /* FUENTE DE GOOGLE FONTS */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+        /* PANTALLA DE INICIO */
+        #contenedor-inicio {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(255, 248, 225, 0.98);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            transition: opacity 1s ease-in-out;
+        }
+
+        #contenedor-inicio h1 {
+            font-size: 36px;
+            color: #fbc02d;
+            margin-bottom: 25px;
+            text-align: center;
+            padding: 0 20px;
+            font-weight: 700;
+            text-shadow: 1px 1px 0 #a1887f;
+        }
+
+        .instruccion {
+            font-size: 20px;
+            color: #8d6e63;
+            margin-bottom: 30px;
+            font-weight: 400;
+        }
+
+        #btn-ver {
+            padding: 18px 50px;
+            font-size: 22px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #fbc02d, #f9a825);
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(251, 192, 45, 0.4);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        #btn-ver:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(251, 192, 45, 0.6);
+        }
+
+        canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        /* TARJETA FINAL (OCULTA HASTA EL FINAL) */
+        #tarjeta-agradecimiento {
+            position: absolute;
+            top: 55%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            width: 85%;
+            max-width: 450px;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(10px);
+            border: 3px solid #fff9c4;
+            padding: 35px;
+            border-radius: 30px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.15);
+            opacity: 0;
+            transition: opacity 2s ease-in-out, transform 2s ease-in-out;
+            pointer-events: none; 
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #tarjeta-agradecimiento h2 {
+            font-size: 28px;
+            color: #f9a825;
+            margin-bottom: 20px;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        #tarjeta-agradecimiento p {
+            font-size: 17px;
+            line-height: 1.7;
+            color: #5d4037;
+            margin-bottom: 25px;
+            text-align: center;
+            font-weight: 400;
+        }
+
+        .firma {
+            font-size: 16px;
+            font-style: italic;
+            color: #8d6e63;
+            border-top: 1px solid #ffe082;
+            padding-top: 15px;
+            width: 80%;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- PANTALLA DE INICIO -->
+    <div id="contenedor-inicio">
+        <h1>Un detallito de flores amarillas 🌻</h1>
+        <p class="instruccion">Para alguien muy chévere...</p>
+        <button id="btn-ver">Ver sorpresa</button>
+    </div>
+
+    <!-- TARJETA FINAL -->
+    <div id="tarjeta-agradecimiento">
+        <h2>¡Hola! 🌻</h2>
+        <p>Quería dejarte este detallito porque me pareces una persona súper chévere y muy alegre. Me agradó muchísimo tu carisma... aunque también me causaba gracia cuando te ponías seria en silencio a solo observar todo jajaja. ¡Un abrazo!</p>
+        <div class="firma">De parte de tu estudiante 😊</div>
+    </div>
+
+    <!-- Audio de fondo -->
+    <audio id="musica-fondo" loop>
+        <source src="musica.mp3" type="audio/mp3">
+    </audio>
+
+    <canvas id="lienzo"></canvas>
+
+    <script>
+        const canvas = document.getElementById('lienzo');
+        const ctx = canvas.getContext('2d');
+
+        const ANCHO = window.innerWidth;
+        const ALTO = window.innerHeight;
+        canvas.width = ANCHO;
+        canvas.height = ALTO;
+
+        let estado = "INICIO"; 
+        let tiempoInicioAnimacion = 0;
+        const duracionCrecimiento = 8000; 
+        let progresoCrecimiento = 0; 
+
+        const girasol = {
+            x: ANCHO / 2,
+            y: ALTO + 100, 
+            yFinal: ALTO / 2 + 50, 
+            escala: 0.0,
+            escalaFinal: 1.8, 
+            anguloTallo: 0
+        };
+
+        function dibujarGirasol(x, y, escala, opacidad) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(escala, escala);
+            ctx.globalAlpha = opacidad;
+
+            // Tallo
+            ctx.strokeStyle = "#689f38";
+            ctx.lineWidth = 8;
+            ctx.beginPath();
+            ctx.moveTo(0, 50);
+            ctx.lineTo(0, 250); 
+            ctx.stroke();
+
+            // Hojas
+            ctx.fillStyle = "#8bc34a";
+            ctx.beginPath();
+            ctx.ellipse(25, 150, 25, 50, Math.PI/4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(-25, 200, 25, 50, -Math.PI/4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Pétalos
+            const numPetalos = 20;
+            const radioPetaloMayor = 60;
+            const radioPetaloMenor = 15;
+            for (let i = 0; i < numPetalos; i++) {
+                ctx.save();
+                ctx.rotate(i * (Math.PI * 2 / numPetalos));
+                ctx.fillStyle = "#ffeb3b";
+                ctx.beginPath();
+                ctx.ellipse(0, -45, radioPetaloMenor, radioPetaloMayor, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // Centro
+            ctx.fillStyle = "#3e2723";
+            ctx.beginPath();
+            ctx.arc(0, 0, 35, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Detalles de semillas
+            ctx.fillStyle = "#5d4037";
+            for(let j = 0; j < 8; j++) {
+                let ang = j * (Math.PI / 4);
+                let dx = Math.cos(ang) * 15;
+                let dy = Math.sin(ang) * 15;
+                ctx.beginPath();
+                ctx.arc(dx, dy, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.restore();
+        }
+
+        function animar() {
+            ctx.fillStyle = "#fff8e1";
+            ctx.fillRect(0, 0, ANCHO, ALTO);
+
+            if (estado === "CRECIENDO") {
+                const tiempoActual = Date.now();
+                const tiempoTranscurrido = tiempoActual - tiempoInicioAnimacion;
+                progresoCrecimiento = Math.min(tiempoTranscurrido / duracionCrecimiento, 1.0);
+
+                let easing = 1 - Math.exp(-progresoCrecimiento * 4); 
+                let rebote = 1 + 0.1 * Math.sin(progresoCrecimiento * 15 * Math.PI); 
+
+                girasol.y = girasol.yFinal + (girasol.y - girasol.yFinal) * (1 - easing); 
+                girasol.escala = girasol.escalaFinal * easing * rebote;
+                let opacidad = progresoCrecimiento * 1.2; 
+
+                dibujarGirasol(girasol.x, girasol.y, girasol.escala, opacidad);
+
+                if (progresoCrecimiento >= 1.0) {
+                    estado = "FIN";
+                    mostrarTarjetaAgradecimiento();
+                }
+            } else if (estado === "FIN") {
+                dibujarGirasol(girasol.x, girasol.yFinal, girasol.escalaFinal, 1.0);
+            }
+
+            if (estado !== "FIN") {
+                requestAnimationFrame(animar);
+            }
+        }
+
+        document.getElementById('btn-ver').addEventListener('click', iniciarExperiencia);
+
+        function iniciarExperiencia() {
+            const musica = document.getElementById('musica-fondo');
+            musica.play().catch(e => console.log("Audio bloqueado"));
+
+            const inicio = document.getElementById('contenedor-inicio');
+            inicio.style.opacity = '0';
+            setTimeout(() => {
+                inicio.style.display = 'none';
+                estado = "CRECIENDO";
+                tiempoInicioAnimacion = Date.now();
+                animar();
+            }, 1000);
+        }
+
+        function mostrarTarjetaAgradecimiento() {
+            const tarjeta = document.getElementById('tarjeta-agradecimiento');
+            tarjeta.style.opacity = '1';
+            tarjeta.style.transform = 'translate(-50%, -50%) scale(1)';
+            tarjeta.style.pointerEvents = 'auto'; 
+        }
+
+    </script>
+</body>
+</html>
